@@ -1,0 +1,153 @@
+Algorithm update log:
+A2C V3:
+Changes:
+* add learning rate scheduler: self.scheduler = StepLR(self.optimizer, step_size=100, gamma=0.1)
+* sent the original leanrning rate as 0.003
+* revise shaped rewards: shaped_reward = (original_reward + 0.8 * velocity)
+* change the best episode log after training
+* change the checkpoint save to every 100 episodes
+
+Bug fix:
+* best episode = 0
+
+Version 3.1
+changes: 
+* the learning rate decreased too fast, set the original as 0.005, scheduler gamma is set to 0.8
+
+Verison 3.2
+* episodes = 500 * reduce the training time and quicker for debugging
+* change the device to cuda
+
+# Optionally, adjust entropycoef to reduce excess exploration
+self.entropy_coef = 0.005
+
+# When initializing the optimizer, you might try different learning rates for policy and value nets:
+self.optimizer = optim.Adam(self.policy.parameters(), lr=0.005)
+
+Version 3.3
+# Increase reward scaling to amplify differences in advantages
+self.entropy_coef = 0.0025
+
+Version 3.4
+shaped_reward = (original_reward + 1.5 * velocity)
+
+Version 3.5
+self.entropy_coef = 0.005
+# experiment with 0.005 to 0.01 if necessary
+
+Version 3.6
+* torch.save(agent.policy.state_dict(), "a2c.pth")
+
+# Define parameter groups:
+actor_params = list(self.policy.fc_policy.parameters()) + list(self.policy.conv.parameters())
+critic_params = list(self.policy.fc_value.parameters())
+self.optimizer = optim.Adam([
+    {'params': actor_params, 'lr': 0.003},
+    {'params': critic_params, 'lr': 0.005}
+])
+# Scheduler can be similarly applied or be different per parameter group.
+self.scheduler = StepLR(self.optimizer, step_size=100, gamma=0.8)
+
+Version 3.7
+self.reward_scaler = 0.1
+
+Version 3.8
+entropy_loss = -torch.mean(torch.log(values + 1e-8) * values)
+
+Version 3.8.1
+# Version 3: Compute entropy from the categorical distribution
+dist_e = Categorical(logits=log_probs)
+entropy_loss = dist_e.entropy().mean()
+
+Version 3.9
+entropy_loss = -torch.mean(log_probs * torch.exp(log_probs))
+self.entropy_coef = 0.01
+
+Version 3.10
+loss = policy_loss + value_loss - self.entropy_coef * entropy_loss
+
+Version 3.11
+loss = policy_loss + 0.3 * value_loss - self.entropy_coef * entropy_loss
+episodes=1000
+learning rate = 0.005
+        self.optimizer = optim.Adam([
+            {'params': actor_params, 'lr': learning_rate},
+            {'params': critic_params, 'lr': 0.005}
+        ])
+
+Version 3.12
+        # Modify the raw reward to encourage desired behavior
+        # reduce negative rewards come from time penalties
+        # amplify gate rewards
+        if original_reward == -1:
+            # Reduce the time penalty by half
+            modified_reward = original_reward * 0.01
+        elif original_reward == -5:
+            modified_reward = original_reward * 0.01
+        else
+            # Emphasize gate reward by boosting it (e.g., 2.0 times)
+            modified_reward = original_reward * 2.0
+
+
+        shaped_reward = (modified_reward + 1.5 * velocity)
+
+Version 3.13
+        if 4.0 < velocity < 7.0:
+            # Reduce the time penalty
+            modified_reward = original_reward * 0.01
+        else:
+            modified_reward = original_reward
+
+A2C V4
+Version 4.0
+* import stable_baselines3 package
+# Initialize A2C agent with TensorBoard logging enabled
+model = A2C(
+    "CnnPolicy",
+    env,
+    learning_rate=7e-4,
+    n_steps=5,
+    gamma=0.99,
+    ent_coef=0.01,  # Encourage exploration
+    policy_kwargs=policy_kwargs,
+    tensorboard_log="./logs/",  # Log files will be saved in the logs folder
+    verbose=1,
+)
+* Open your integrated terminal in Visual Studio Code and run the following command:
+tensorboard --logdir=./logs/
+
+Version 4.1 
+policy_kwargs = dict(
+    net_arch=[dict(pi=[512, 256], vf=[512, 256])]  # Actor/Critic MLP layers after CNN
+)
+
+# Initialize A2C agent
+model = A2C(
+    "CnnPolicy",
+    env,
+    learning_rate=5e-3,
+    n_steps=25,
+    gamma=0.99,
+    ent_coef=0.01,  # Encourage exploration
+    policy_kwargs=policy_kwargs,
+    tensorboard_log="./a2c_skiing_tensorboard/",
+    verbose=1,
+)
+
+ plt.savefig("a2c_training_plots.png")
+
+Version 4.2
+# Initialize A2C agent
+model = A2C(
+    "CnnPolicy",
+    env,
+    learning_rate=2.5e-3,
+    n_steps=10,
+    gamma=0.99,
+    ent_coef=0.01,  # Encourage exploration
+    policy_kwargs=policy_kwargs,
+    tensorboard_log="./a2c_skiing_tensorboard/",
+    verbose=1,
+)
+total_timesteps=200_000,
+
